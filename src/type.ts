@@ -1,9 +1,11 @@
 import { UUID } from 'crypto';
+import { WebSocket } from 'ws';
 
 export interface User {
   id: UUID;
   login: string;
   password: string;
+  websocet: WebSocket;
 }
 
 export interface Rooms {
@@ -13,4 +15,21 @@ export interface Rooms {
 interface InGameUserr {
   name: string;
   index: UUID;
+}
+
+export interface Winner {
+  name: string;
+  wins: number;
+}
+
+interface Players {
+  id: UUID | undefined;
+  websocet: WebSocket | null;
+  ships: any;
+}
+
+export interface ActiveRoom {
+  roomId: UUID;
+  players: Players[];
+  playerTurn: UUID | null;
 }

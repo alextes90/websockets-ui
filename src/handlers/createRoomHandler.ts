@@ -1,13 +1,16 @@
 import { randomUUID } from 'crypto';
-import { gamesDb } from '../db';
+import { db, gamesDb } from '../db';
+import { WebSocket } from 'ws';
 
-export const createRoomHandler = () => {
+export const createRoomHandler = (ws: WebSocket) => {
   const roomId = randomUUID();
   const playerId = randomUUID();
 
+  const gameCreatorName = db.find((room) => room.websocet === ws);
+
   gamesDb.push({
     roomId,
-    roomUsers: [{ name: 'player1', index: playerId }],
+    roomUsers: [{ name: gameCreatorName?.login || 'player1', index: playerId }],
   });
 
   return {

@@ -1,3 +1,5 @@
+import { activeRooms } from '../db';
+
 export const startDataHandler = (data: any) => {
   for (let i = 0; i < 2; i++) {
     data.players[i].websocet.send(
@@ -11,6 +13,8 @@ export const startDataHandler = (data: any) => {
       })
     );
     if (i === 0) {
+      data.playerTurn = data.players[0].id;
+
       data.players[i].websocet.send(
         JSON.stringify({
           type: 'turn',

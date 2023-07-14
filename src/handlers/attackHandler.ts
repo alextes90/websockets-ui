@@ -1,28 +1,45 @@
-import { ActiveRoom } from '../utils/messageHandler';
+import { ActiveRoom } from '../type';
 
-export const atackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
+export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
   const { gameId, x, y, indexPlayer } = JSON.parse(parsedData.data);
   const activeGame = activeRooms.find((el) => el.roomId === gameId)!;
   const activeGameIndex = activeRooms.findIndex((el) => el.roomId === gameId);
   console.log(x, y);
+  console.log(activeGame);
+  if (activeGameIndex === -1) {
+    console.log('no game');
+    return;
+  }
+
+  if (activeGame.playerTurn !== indexPlayer) {
+    return;
+  }
+
   const { ships, websocet, id } = activeGame.players.find(
     (el) => el.id !== indexPlayer
   )!;
   const currWebsocet = activeGame.players.find((el) => el.id === indexPlayer)
     ?.websocet!;
-  console.log(ships);
+  // console.log(ships);
+
   const attackResultHandler = (ships: any, x: number, y: number) => {
-    let result: 'miss' | 'killed' | 'shot';
+    let result: 'miss' | 'killed' | 'shot' | 'winner';
     result = 'miss';
     let length = 0;
     let direction = true;
     let position = { x: 0, y: 0 };
     const newShips = ships.map((el: any) => {
-      let live = el.live || el.length;
+      let live = el.live === undefined ? el.length : el.live;
       for (let i = 0; i < el.length; i++) {
         if (!el.direction) {
           if (x === el.position.x + i && y === el.position.y) {
             if (el.length === 1 || (el.live && el.live === 1)) {
+              live = 0;
+              result = 'killed';
+              length = el.length;
+              direction = el.direction;
+              position = el.position;
+            } else if (live === 0) {
               result = 'killed';
               length = el.length;
               direction = el.direction;
@@ -35,6 +52,12 @@ export const atackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
         } else {
           if (y === el.position.y + i && x === el.position.x) {
             if (el.length === 1 || (el.live && el.live === 1)) {
+              live = 0;
+              result = 'killed';
+              length = el.length;
+              direction = el.direction;
+              position = el.position;
+            } else if (live === 0) {
               result = 'killed';
               length = el.length;
               direction = el.direction;
@@ -51,6 +74,12 @@ export const atackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
         live,
       };
     });
+
+    const isWinner = newShips.every((el: any) => el.live === 0);
+
+    if (isWinner) {
+      result = 'winner';
+    }
 
     const curentPlayerIndex = activeRooms[activeGameIndex].players.findIndex(
       (el: any) => el.id === id
@@ -124,7 +153,21 @@ export const atackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
       id: 0,
     });
 
-  if (attackResult.result === 'miss') {
+  const winnerMessage = JSON.stringify({
+    type: 'finish',
+    data: JSON.stringify({
+      winPlayer: indexPlayer,
+    }),
+    id: 0,
+  });
+
+  if (attackResult.result === 'winner') {
+    activeRooms.splice(activeGameIndex, 1);
+    currWebsocet.send(winnerMessage);
+    websocet?.send(winnerMessage);
+    return currWebsocet;
+  } else if (attackResult.result === 'miss') {
+    activeRooms[activeGameIndex].playerTurn = id || null;
     currWebsocet.send(missMessage(x, y));
     websocet?.send(missMessage(x, y));
     currWebsocet.send(opponentsTurnMessage);
