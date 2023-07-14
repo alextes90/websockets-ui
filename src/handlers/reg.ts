@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto';
 import { db } from '../db';
+import { WebSocket } from 'ws';
 
-export const regHandler = (parsedData: any) => {
+export const regHandler = (parsedData: any, ws: WebSocket) => {
   const parsedReqData = JSON.parse(parsedData.data);
   const { name, password } = parsedReqData;
   if (
@@ -43,7 +44,7 @@ export const regHandler = (parsedData: any) => {
     };
   } else {
     const playerId = randomUUID();
-    db.push({ id: playerId, login: name, password });
+    db.push({ id: playerId, login: name, password, websocet: ws });
     return {
       type: 'reg',
       data: JSON.stringify({

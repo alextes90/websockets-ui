@@ -1,8 +1,8 @@
-import { createWebSocketStream, WebSocketServer } from 'ws';
+import { WebSocketServer } from 'ws';
 import 'dotenv/config';
 import { messageHandler } from '../utils/messageHandler';
 import { responseHandler } from '../utils/responseHandler';
-import { gamesDb } from '../db';
+import { gamesDb, winnersDb } from '../db';
 import { startDataHandler } from '../handlers/startDataHandler';
 
 const PORT = Number(process.env.PORT || 3000);
@@ -34,6 +34,17 @@ wss.on('connection', (ws, req) => {
           );
         });
       }
+      if (response?.type === 'Winner') {
+        wss.clients.forEach((socket) => {
+          socket.send(
+            JSON.stringify({
+              type: 'update_winners',
+              data: JSON.stringify(winnersDb),
+              id: 0,
+            })
+          );
+        });
+      }
       if (response && response.type === 'InnerStart') {
         startDataHandler(response.data);
       } else if (response) {
@@ -44,6 +55,15 @@ wss.on('connection', (ws, req) => {
             JSON.stringify({
               type: 'update_room',
               data: JSON.stringify(gamesDb),
+              id: 0,
+            })
+          );
+        }
+        if (winnersDb.length > 0) {
+          ws.send(
+            JSON.stringify({
+              type: 'update_winners',
+              data: JSON.stringify(winnersDb),
               id: 0,
             })
           );

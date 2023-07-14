@@ -1,22 +1,10 @@
 import { RawData, WebSocket } from 'ws';
 import { regHandler } from '../handlers/reg';
 import { createRoomHandler } from '../handlers/createRoomHandler';
-import { gamesDb } from '../db';
-import { UUID, randomUUID } from 'crypto';
-import { atackHandler } from '../handlers/atackHandler';
-
-interface Players {
-  id: UUID | undefined;
-  websocet: WebSocket | null;
-  ships: any;
-}
-
-export interface ActiveRoom {
-  roomId: UUID;
-  players: Players[];
-}
-
-const activeRooms: ActiveRoom[] = [];
+import { activeRooms, db, gamesDb, winnersDb } from '../db';
+import { randomUUID } from 'crypto';
+import { attackHandler } from '../handlers/attackHandler';
+import { randomAttackHandler } from '../handlers/randomAttackHandler';
 
 export const messageHandler = (
   data: RawData,
@@ -29,9 +17,9 @@ export const messageHandler = (
   console.log('command: ', parsedData.type);
   switch (parsedData.type) {
     case 'reg':
-      return regHandler(parsedData);
+      return regHandler(parsedData, ws);
     case 'create_room':
-      return createRoomHandler();
+      return createRoomHandler(ws);
     case 'add_user_to_room':
       const { indexRoom } = JSON.parse(parsedData.data);
       const roomIndex = gamesDb.findIndex((el) => el.roomId === indexRoom);
@@ -57,6 +45,7 @@ export const messageHandler = (
             { id: playerOId, websocet: null, ships: null },
             { id: opponentId, websocet: null, ships: null },
           ],
+          playerTurn: null,
         });
       }
 
@@ -74,6 +63,7 @@ export const messageHandler = (
         activeRooms.push({
           roomId: gameId,
           players: [{ id: indexPlayer, websocet: ws, ships: ships }],
+          playerTurn: null,
         });
       } else {
         const curentPlayerIndex = activeRooms[
@@ -86,6 +76,27 @@ export const messageHandler = (
       }
       break;
     case 'attack':
-      atackHandler(parsedData, activeRooms);
+      const winnerSocet = attackHandler(parsedData, activeRooms);
+
+      if (winnerSocet) {
+        const winnerName = db.find((room) => room.websocet === winnerSocet);
+        const currentWinnerIndex = winnersDb.findIndex(
+          (el) => el.name === winnerName?.login
+        );
+
+        if (currentWinnerIndex > -1) {
+          winnersDb[currentWinnerIndex].wins += 1;
+        } else {
+          winnersDb.push({ name: winnerName?.login || 'player1', wins: 1 });
+        }
+
+        console.log(winnersDb);
+
+        return { type: 'Winner', data: winnerSocet };
+      }
+      break;
+    case 'randomAttack':
+      randomAttackHandler(parsedData, activeRooms);
+      break;
   }
 };
