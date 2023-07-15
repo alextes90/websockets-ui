@@ -14,7 +14,6 @@ export const messageHandler = (
 ) => {
   const message = (isBinary ? data : data.toString()) as string;
   const parsedData = JSON.parse(message);
-  console.log(parsedData);
   console.log('command: ', parsedData.type);
   switch (parsedData.type) {
     case 'reg':
@@ -71,7 +70,7 @@ export const messageHandler = (
       } else {
         const curentPlayerIndex = activeRooms[
           activeGameIndex
-        ].players.findIndex((el: any) => el.id === indexPlayer);
+        ].players.findIndex((el) => el.id === indexPlayer);
         activeRooms[activeGameIndex].players[curentPlayerIndex].websocet = ws;
         activeRooms[activeGameIndex].players[curentPlayerIndex].ships = ships;
 

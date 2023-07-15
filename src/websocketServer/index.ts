@@ -23,7 +23,6 @@ wss.on('connection', (ws, req) => {
 
   connectedClients.set(ws, true);
   ws.on('pong', () => {
-    console.log('pong');
     connectedClients.set(ws, true);
   });
 
@@ -31,7 +30,6 @@ wss.on('connection', (ws, req) => {
     const isPlaying = activeRooms.find((el) =>
       el.players.find((player) => player.websocet === ws)
     );
-    console.log('from ping:', isPlaying);
     if (isPlaying) {
       const winnerWebsocet = isPlaying?.players.find(
         (el) => el.websocet !== ws
@@ -132,7 +130,7 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-setInterval(() => {
+const intervalId = setInterval(() => {
   Array.from(connectedClients.keys()).forEach((ws) => {
     if (!connectedClients.get(ws)) {
       ws.terminate();
@@ -150,5 +148,7 @@ process.on('SIGINT', () => {
 
   wss.close();
 
-  console.log('server closed');
+  clearInterval(intervalId);
+
+  console.log('Websocet server closed');
 });

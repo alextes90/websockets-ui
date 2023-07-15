@@ -7,8 +7,7 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
   const { gameId, x, y, indexPlayer } = JSON.parse(parsedData.data);
   const activeGame = activeRooms.find((el) => el.roomId === gameId)!;
   const activeGameIndex = activeRooms.findIndex((el) => el.roomId === gameId);
-  console.log(x, y);
-  console.log(activeGame);
+
   if (activeGameIndex === -1) {
     return;
   }
@@ -84,7 +83,7 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
     }
 
     const curentPlayerIndex = activeRooms[activeGameIndex].players.findIndex(
-      (el: any) => el.id === id
+      (el) => el.id === id
     );
     activeRooms[activeGameIndex].players[curentPlayerIndex].ships = newShips;
 
@@ -188,7 +187,6 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
     currWebsocet?.send(currentPlayerTurnMessage);
     websocet?.send(currentPlayerTurnMessage);
     if (indexPlayer === 'comp') {
-      console.log('HERE');
       const parsedDataNew = {
         data: JSON.stringify({ gameId, indexPlayer }),
       };

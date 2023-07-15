@@ -25,7 +25,7 @@ export interface Winner {
 interface Players {
   id: UUID | undefined | 'comp';
   websocet: WebSocket | null;
-  ships: any;
+  ships: unknown;
 }
 
 export interface ActiveRoom {

@@ -20,5 +20,5 @@ export const httpServer = http.createServer(function (req, res) {
 process.on('SIGINT', () => {
   httpServer.close();
 
-  console.log('server closed');
+  console.log('Http: server closed');
 });
