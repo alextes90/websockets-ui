@@ -5,6 +5,7 @@ import { activeRooms, db, gamesDb, winnersDb } from '../db';
 import { randomUUID } from 'crypto';
 import { attackHandler } from '../handlers/attackHandler';
 import { randomAttackHandler } from '../handlers/randomAttackHandler';
+import { singlePlayerHandler } from '../handlers/singlePlayerHandler';
 
 export const messageHandler = (
   data: RawData,
@@ -46,6 +47,7 @@ export const messageHandler = (
             { id: opponentId, websocet: null, ships: null },
           ],
           playerTurn: null,
+          isSingle: false,
         });
       }
 
@@ -64,6 +66,7 @@ export const messageHandler = (
           roomId: gameId,
           players: [{ id: indexPlayer, websocet: ws, ships: ships }],
           playerTurn: null,
+          isSingle: false,
         });
       } else {
         const curentPlayerIndex = activeRooms[
@@ -78,25 +81,30 @@ export const messageHandler = (
     case 'attack':
       const winnerSocet = attackHandler(parsedData, activeRooms);
 
-      if (winnerSocet) {
-        const winnerName = db.find((room) => room.websocet === winnerSocet);
+      if (winnerSocet?.currWebsocet) {
+        const winnerName = db.find(
+          (room) => room.websocet === winnerSocet.currWebsocet
+        );
         const currentWinnerIndex = winnersDb.findIndex(
           (el) => el.name === winnerName?.login
         );
 
-        if (currentWinnerIndex > -1) {
-          winnersDb[currentWinnerIndex].wins += 1;
-        } else {
-          winnersDb.push({ name: winnerName?.login || 'player1', wins: 1 });
+        if (!winnerSocet.isSingle) {
+          if (currentWinnerIndex > -1) {
+            winnersDb[currentWinnerIndex].wins += 1;
+          } else {
+            winnersDb.push({ name: winnerName?.login || 'player1', wins: 1 });
+          }
         }
-
-        console.log(winnersDb);
 
         return { type: 'Winner', data: winnerSocet };
       }
       break;
     case 'randomAttack':
       randomAttackHandler(parsedData, activeRooms);
+      break;
+    case 'single_play':
+      singlePlayerHandler(ws);
       break;
   }
 };

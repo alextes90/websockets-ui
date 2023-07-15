@@ -1,4 +1,7 @@
 import { ActiveRoom } from '../type';
+import { randomAttackHandler } from './randomAttackHandler';
+
+const BOT_TIME = 1000;
 
 export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
   const { gameId, x, y, indexPlayer } = JSON.parse(parsedData.data);
@@ -7,7 +10,6 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
   console.log(x, y);
   console.log(activeGame);
   if (activeGameIndex === -1) {
-    console.log('no game');
     return;
   }
 
@@ -18,9 +20,9 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
   const { ships, websocet, id } = activeGame.players.find(
     (el) => el.id !== indexPlayer
   )!;
-  const currWebsocet = activeGame.players.find((el) => el.id === indexPlayer)
-    ?.websocet!;
-  // console.log(ships);
+  const currWebsocet = activeGame.players.find(
+    (el) => el.id === indexPlayer
+  )?.websocet;
 
   const attackResultHandler = (ships: any, x: number, y: number) => {
     let result: 'miss' | 'killed' | 'shot' | 'winner';
@@ -163,20 +165,37 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
 
   if (attackResult.result === 'winner') {
     activeRooms.splice(activeGameIndex, 1);
-    currWebsocet.send(winnerMessage);
+    currWebsocet?.send(winnerMessage);
     websocet?.send(winnerMessage);
-    return currWebsocet;
+    return { currWebsocet, isSingle: activeGame.isSingle };
   } else if (attackResult.result === 'miss') {
     activeRooms[activeGameIndex].playerTurn = id || null;
-    currWebsocet.send(missMessage(x, y));
+    currWebsocet?.send(missMessage(x, y));
     websocet?.send(missMessage(x, y));
-    currWebsocet.send(opponentsTurnMessage);
+    currWebsocet?.send(opponentsTurnMessage);
     websocet?.send(opponentsTurnMessage);
+    if (id === 'comp') {
+      const parsedDataNew = {
+        data: JSON.stringify({ gameId, indexPlayer: id }),
+      };
+      setTimeout(() => {
+        randomAttackHandler(parsedDataNew, activeRooms);
+      }, BOT_TIME);
+    }
   } else if (attackResult.result === 'shot') {
-    currWebsocet.send(shotMessage);
+    currWebsocet?.send(shotMessage);
     websocet?.send(shotMessage);
-    currWebsocet.send(currentPlayerTurnMessage);
+    currWebsocet?.send(currentPlayerTurnMessage);
     websocet?.send(currentPlayerTurnMessage);
+    if (indexPlayer === 'comp') {
+      console.log('HERE');
+      const parsedDataNew = {
+        data: JSON.stringify({ gameId, indexPlayer }),
+      };
+      setTimeout(() => {
+        randomAttackHandler(parsedDataNew, activeRooms);
+      }, BOT_TIME);
+    }
   } else if (attackResult.result === 'killed') {
     for (let i = 0; i < attackResult.length; i++) {
       //horesontal
@@ -184,29 +203,29 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
       if (!attackResult.direction) {
         //missing
         if (i === 0) {
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(attackResult.position.x - 1, attackResult.position.y)
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x - 1,
               attackResult.position.y - 1
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x - 1,
               attackResult.position.y + 1
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(attackResult.position.x, attackResult.position.y + 1)
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(attackResult.position.x, attackResult.position.y - 1)
           );
 
@@ -240,35 +259,35 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
         }
 
         if (i === attackResult.length - 1) {
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + attackResult.length,
               attackResult.position.y
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + attackResult.length,
               attackResult.position.y - 1
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + attackResult.length,
               attackResult.position.y + 1
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + attackResult.length - 1,
               attackResult.position.y + 1
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + attackResult.length - 1,
               attackResult.position.y - 1
@@ -315,11 +334,11 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
 
         //simple miss
 
-        currWebsocet.send(
+        currWebsocet?.send(
           missMessage(attackResult.position.x + i, attackResult.position.y - 1)
         );
 
-        currWebsocet.send(
+        currWebsocet?.send(
           missMessage(attackResult.position.x + i, attackResult.position.y + 1)
         );
 
@@ -332,7 +351,7 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
         );
 
         //killed
-        currWebsocet.send(
+        currWebsocet?.send(
           killMessage(attackResult.position.x + i, attackResult.position.y)
         );
 
@@ -344,29 +363,29 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
 
         //missing
         if (i === 0) {
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(attackResult.position.x, attackResult.position.y - 1)
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x - 1,
               attackResult.position.y - 1
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + 1,
               attackResult.position.y - 1
             )
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(attackResult.position.x + 1, attackResult.position.y)
           );
 
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(attackResult.position.x - 1, attackResult.position.y)
           );
 
@@ -400,31 +419,31 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
         }
 
         if (i === attackResult.length - 1) {
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x,
               attackResult.position.y + attackResult.length
             )
           );
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x - 1,
               attackResult.position.y + attackResult.length
             )
           );
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + 1,
               attackResult.position.y + attackResult.length
             )
           );
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x + 1,
               attackResult.position.y + attackResult.length - 1
             )
           );
-          currWebsocet.send(
+          currWebsocet?.send(
             missMessage(
               attackResult.position.x - 1,
               attackResult.position.y + attackResult.length - 1
@@ -466,10 +485,10 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
 
         //simple miss
 
-        currWebsocet.send(
+        currWebsocet?.send(
           missMessage(attackResult.position.x - 1, attackResult.position.y + i)
         );
-        currWebsocet.send(
+        currWebsocet?.send(
           missMessage(attackResult.position.x + 1, attackResult.position.y + i)
         );
         websocet?.send(
@@ -481,7 +500,7 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
 
         //killed
 
-        currWebsocet.send(
+        currWebsocet?.send(
           killMessage(attackResult.position.x, attackResult.position.y + i)
         );
         websocet?.send(
@@ -491,7 +510,15 @@ export const attackHandler = (parsedData: any, activeRooms: ActiveRoom[]) => {
     }
 
     //turns
-    currWebsocet.send(currentPlayerTurnMessage);
+    currWebsocet?.send(currentPlayerTurnMessage);
     websocet?.send(currentPlayerTurnMessage);
+    if (indexPlayer === 'comp') {
+      const parsedDataNew = {
+        data: JSON.stringify({ gameId, indexPlayer }),
+      };
+      setTimeout(() => {
+        randomAttackHandler(parsedDataNew, activeRooms);
+      }, BOT_TIME);
+    }
   }
 };

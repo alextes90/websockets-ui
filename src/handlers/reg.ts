@@ -22,6 +22,7 @@ export const regHandler = (parsedData: any, ws: WebSocket) => {
     };
   }
   const user = db.find(({ login }) => login === name);
+
   if (user && user.password !== password) {
     return {
       type: 'reg',
@@ -33,6 +34,7 @@ export const regHandler = (parsedData: any, ws: WebSocket) => {
       }),
     };
   } else if (user) {
+    user.websocet === ws;
     return {
       type: 'reg',
       data: JSON.stringify({

@@ -1,5 +1,3 @@
-import { activeRooms } from '../db';
-
 export const startDataHandler = (data: any) => {
   for (let i = 0; i < 2; i++) {
     data.players[i].websocet.send(

@@ -5,9 +5,7 @@ import { WebSocket } from 'ws';
 export const createRoomHandler = (ws: WebSocket) => {
   const roomId = randomUUID();
   const playerId = randomUUID();
-
   const gameCreatorName = db.find((room) => room.websocet === ws);
-
   gamesDb.push({
     roomId,
     roomUsers: [{ name: gameCreatorName?.login || 'player1', index: playerId }],
